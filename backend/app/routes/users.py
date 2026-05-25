@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from ..database import get_db
 from .. import models, schemas
-from ..auth import hash_password, verify_password, create_access_token
+from ..auth import hash_password, verify_password, create_access_token, get_current_user
 
 router = APIRouter(
     prefix="/users",
@@ -62,4 +62,13 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     return {
         "access_token": token,
         "token_type": "bearer"
+    }
+
+@router.get("/me")
+def get_me(current_user: models.User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "username": current_user.username,
+        "email": current_user.email,
+        "invite_code": current_user.invite_code
     }
