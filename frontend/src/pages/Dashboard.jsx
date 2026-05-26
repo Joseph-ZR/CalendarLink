@@ -12,6 +12,7 @@ function Dashboard() {
   const [linkedUsers, setLinkedUsers] = useState([]);
   const [inviteCode, setInviteCode] = useState("");
   const [linkMessage, setLinkMessage] = useState("");
+  const [sharedEvents, setSharedEvents] = useState([]);
 
   const [eventForm, setEventForm] = useState({
     title: "",
@@ -38,6 +39,15 @@ function Dashboard() {
       setEvents(response.data);
     } catch (err) {
       console.log(err);
+    }
+  }
+
+  async function fetchSharedEvents() {
+    try {
+      const response = await API.get("/events/shared");
+      setSharedEvents(response.data);
+    } catch (err) {
+      console.log(err.response?.data || err.message);
     }
   }
 
@@ -145,7 +155,9 @@ async function handleLinkUser(e) {
 
     setLinkMessage(response.data.message);
     setInviteCode("");
+
     fetchLinkedUsers();
+    fetchSharedEvents();
   } catch (err) {
     setLinkMessage(err.response?.data?.detail || "Could not link user");
   }
@@ -155,6 +167,7 @@ async function handleLinkUser(e) {
     fetchUser();
     fetchEvents();
     fetchLinkedUsers();
+    fetchSharedEvents();
   }, []);
 
   return (
@@ -313,6 +326,40 @@ async function handleLinkUser(e) {
                       Delete
                     </button>
                   </div>
+                </article>
+              ))
+            )}
+          </div>
+        </div>
+        <div className="dashboard-card">
+          <h2>Shared Events</h2>
+
+          <div className="events-list">
+            {sharedEvents.length === 0 ? (
+              <p>No shared events yet.</p>
+            ) : (
+              sharedEvents.map((event) => (
+                <article
+                  key={event.id}
+                  className="event-card"
+                  style={{
+                    borderLeft: `6px solid ${event.color}`,
+                  }}
+                >
+                  <h3>
+                    {event.visibility === "busy" ? "Busy" : event.title}
+                  </h3>
+
+                  {event.visibility === "shared" && <p>{event.description}</p>}
+
+                  <p className="event-meta">
+                    {new Date(event.start_datetime).toLocaleString()} —{" "}
+                    {new Date(event.end_datetime).toLocaleString()}
+                  </p>
+
+                  <p className="event-meta">
+                    Visibility: {event.visibility}
+                  </p>
                 </article>
               ))
             )}
