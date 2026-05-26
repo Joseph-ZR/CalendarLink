@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import "../CssStyles/Dashboard.css";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -289,47 +291,61 @@ async function handleLinkUser(e) {
         <div className="dashboard-card">
           <h2>Your Events</h2>
 
-          <div className="events-list">
-            {events.length === 0 ? (
-              <p>No events yet.</p>
-            ) : (
-              events.map((event) => (
-                <article
-                  key={event.id}
-                  className="event-card"
-                  style={{
-                    borderLeft: `6px solid ${event.color}`,
-                  }}
-                >
-                  <h3>{event.title}</h3>
+          <FullCalendar
+            plugins={[dayGridPlugin]}
+            initialView="dayGridMonth"
+            height="auto"
+            events={events.map((event) => ({
+              title: event.title,
+              start: event.start_datetime,
+              end: event.end_datetime,
+              color: event.color,
+            }))}
+          />
+        </div>
+        <div className="dashboard-card">
+          <div className="events-list" style={{ marginTop: "2rem" }}>
+          <h3>Manage Events</h3>
 
-                  <p>{event.description}</p>
+          {events.length === 0 ? (
+            <p>No events yet.</p>
+          ) : (
+            events.map((event) => (
+              <article
+                key={event.id}
+                className="event-card"
+                style={{
+                  borderLeft: `6px solid ${event.color}`,
+                }}
+              >
+                <h3>{event.title}</h3>
 
-                  <p className="event-meta">
-                    {new Date(event.start_datetime).toLocaleString()} —{" "}
-                    {new Date(event.end_datetime).toLocaleString()}
-                  </p>
+                <p>{event.description}</p>
 
-                  <p className="event-meta">
-                    Visibility: {event.visibility}
-                  </p>
-                  <div className="event-actions">
-                    <button type="button" onClick={() => startEditing(event)}>
-                      Edit
-                    </button>
+                <p className="event-meta">
+                  {new Date(event.start_datetime).toLocaleString()} —{" "}
+                  {new Date(event.end_datetime).toLocaleString()}
+                </p>
 
-                    <button
-                      type="button"
-                      className="delete-button"
-                      onClick={() => handleDeleteEvent(event.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </article>
-              ))
-            )}
-          </div>
+                <p className="event-meta">Visibility: {event.visibility}</p>
+
+                <div className="event-actions">
+                  <button type="button" onClick={() => startEditing(event)}>
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    className="delete-button"
+                    onClick={() => handleDeleteEvent(event.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
         </div>
         <div className="dashboard-card">
           <h2>Shared Events</h2>
