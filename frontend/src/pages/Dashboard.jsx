@@ -8,6 +8,7 @@ function Dashboard() {
 
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
+  const [editingEventId, setEditingEventId] = useState(null);
 
   const [eventForm, setEventForm] = useState({
     title: "",
@@ -69,6 +70,57 @@ function Dashboard() {
       console.log(err.response?.data || err.message);
     }
   }
+function startEditing(event) {
+  setEditingEventId(event.id);
+
+  setEventForm({
+    title: event.title,
+    description: event.description || "",
+    start_datetime: event.start_datetime.slice(0, 16),
+    end_datetime: event.end_datetime.slice(0, 16),
+    visibility: event.visibility,
+    color: event.color,
+  });
+}
+
+function cancelEditing() {
+  setEditingEventId(null);
+
+  setEventForm({
+    title: "",
+    description: "",
+    start_datetime: "",
+    end_datetime: "",
+    visibility: "private",
+    color: "#3b82f6",
+  });
+}
+
+async function handleUpdateEvent(e) {
+  e.preventDefault();
+
+  try {
+    await API.put(`/events/${editingEventId}`, eventForm);
+
+    cancelEditing();
+    fetchEvents();
+  } catch (err) {
+    console.log(err.response?.data || err.message);
+  }
+}
+
+async function handleDeleteEvent(eventId) {
+  const confirmed = window.confirm("Are you sure you want to delete this event?");
+
+  if (!confirmed) return;
+
+  try {
+    await API.delete(`/events/${eventId}`);
+    fetchEvents();
+  } catch (err) {
+    console.log(err.response?.data || err.message);
+  }
+}
 
   useEffect(() => {
     fetchUser();
@@ -96,9 +148,12 @@ function Dashboard() {
 
       <section className="dashboard-grid">
         <div className="dashboard-card">
-          <h2>Create Event</h2>
+          <h2>{editingEventId ? "Edit Event" : "Create Event"}</h2>
 
-          <form className="event-form" onSubmit={handleCreateEvent}>
+          <form
+              className="event-form"
+              onSubmit={editingEventId ? handleUpdateEvent : handleCreateEvent}
+            >
             <input
               name="title"
               placeholder="Event title"
@@ -147,7 +202,15 @@ function Dashboard() {
               onChange={handleEventChange}
             />
 
-            <button type="submit">Create Event</button>
+            <button type="submit">
+              {editingEventId ? "Update Event" : "Create Event"}
+            </button>
+
+            {editingEventId && (
+              <button type="button" className="cancel-button" onClick={cancelEditing}>
+                Cancel Edit
+              </button>
+            )}
           </form>
         </div>
 
@@ -178,6 +241,19 @@ function Dashboard() {
                   <p className="event-meta">
                     Visibility: {event.visibility}
                   </p>
+                  <div className="event-actions">
+                    <button type="button" onClick={() => startEditing(event)}>
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      className="delete-button"
+                      onClick={() => handleDeleteEvent(event.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </article>
               ))
             )}
