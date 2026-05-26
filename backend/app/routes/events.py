@@ -110,3 +110,24 @@ def delete_event(
     db.commit()
 
     return {"message": "Event deleted successfully"}
+
+@router.get("/shared", response_model=List[schemas.EventResponse])
+def get_shared_events(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    links = db.query(models.UserLink).filter(
+        models.UserLink.user_id == current_user.id
+    ).all()
+
+    linked_user_ids = [link.linked_user_id for link in links]
+
+    if not linked_user_ids:
+        return []
+
+    shared_events = db.query(models.Event).filter(
+        models.Event.owner_id.in_(linked_user_ids),
+        models.Event.visibility.in_(["shared", "busy"])
+    ).all()
+
+    return shared_events

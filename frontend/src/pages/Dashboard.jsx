@@ -9,6 +9,9 @@ function Dashboard() {
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
   const [editingEventId, setEditingEventId] = useState(null);
+  const [linkedUsers, setLinkedUsers] = useState([]);
+  const [inviteCode, setInviteCode] = useState("");
+  const [linkMessage, setLinkMessage] = useState("");
 
   const [eventForm, setEventForm] = useState({
     title: "",
@@ -122,9 +125,36 @@ async function handleDeleteEvent(eventId) {
   }
 }
 
+async function fetchLinkedUsers() {
+  try {
+    const response = await API.get("/links/");
+    setLinkedUsers(response.data);
+  } catch (err) {
+    console.log(err.response?.data || err.message);
+  }
+}
+
+async function handleLinkUser(e) {
+  e.preventDefault();
+  setLinkMessage("");
+
+  try {
+    const response = await API.post("/links/", {
+      invite_code: inviteCode,
+    });
+
+    setLinkMessage(response.data.message);
+    setInviteCode("");
+    fetchLinkedUsers();
+  } catch (err) {
+    setLinkMessage(err.response?.data?.detail || "Could not link user");
+  }
+}
+
   useEffect(() => {
     fetchUser();
     fetchEvents();
+    fetchLinkedUsers();
   }, []);
 
   return (
@@ -213,7 +243,36 @@ async function handleDeleteEvent(eventId) {
             )}
           </form>
         </div>
+        <div className="dashboard-card">
+          <h2>Linked Users</h2>
 
+          <form className="event-form" onSubmit={handleLinkUser}>
+            <input
+              type="text"
+              placeholder="Enter invite code"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+              required
+            />
+
+            <button type="submit">Link User</button>
+          </form>
+
+          {linkMessage && <p className="link-message">{linkMessage}</p>}
+
+          <div className="linked-users-list">
+            {linkedUsers.length === 0 ? (
+              <p>No linked users yet.</p>
+            ) : (
+              linkedUsers.map((linkedUser) => (
+                <div key={linkedUser.id} className="linked-user-card">
+                  <strong>{linkedUser.username}</strong>
+                  <p>{linkedUser.email}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
         <div className="dashboard-card">
           <h2>Your Events</h2>
 

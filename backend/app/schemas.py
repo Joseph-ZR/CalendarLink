@@ -47,3 +47,15 @@ class EventResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class LinkCreate(BaseModel):
+    invite_code: str
+
+class LinkedUserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    invite_code: str
+
+    class Config:
+        from_attributes = True

@@ -32,7 +32,7 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 400px 1fr;
+  grid-template-columns: 400px 320px 1fr;
   gap: 2rem;
 }
 
@@ -93,7 +93,7 @@
   font-size: 0.95rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
@@ -127,4 +127,30 @@
 .cancel-button {
   background: #f1f5f9 !important;
   color: #334155 !important;
+}
+
+.link-message {
+  margin-top: 1rem;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.linked-users-list {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.linked-user-card {
+  padding: 0.9rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.linked-user-card p {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
 }

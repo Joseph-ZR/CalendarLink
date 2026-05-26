@@ -25,3 +25,10 @@ class Event(Base):
     color = Column(String, default="#3b82f6")
 
     owner = relationship("User")
+
+class UserLink(Base):
+    __tablename__ = "user_links"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    linked_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
