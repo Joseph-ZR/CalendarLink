@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import "../CssStyles/Dashboard.css";
 import FullCalendar from "@fullcalendar/react";
+import interactionPlugin from "@fullcalendar/interaction";
 import dayGridPlugin from "@fullcalendar/daygrid";
 
 function Dashboard() {
@@ -15,6 +16,8 @@ function Dashboard() {
   const [inviteCode, setInviteCode] = useState("");
   const [linkMessage, setLinkMessage] = useState("");
   const [sharedEvents, setSharedEvents] = useState([]);
+  const [selectedDateEvents, setSelectedDateEvents] = useState([]);
+  const [selectedDate, setSelectedDate] = useState("");
 
   const [eventForm, setEventForm] = useState({
     title: "",
@@ -38,7 +41,12 @@ function Dashboard() {
   async function fetchEvents() {
     try {
       const response = await API.get("/events/");
-      setEvents(response.data);
+
+      const sortedEvents = response.data.sort(
+        (a, b) => new Date(a.start_datetime) - new Date(b.start_datetime)
+      );
+
+      setEvents(sortedEvents);
     } catch (err) {
       console.log(err);
     }
@@ -47,7 +55,12 @@ function Dashboard() {
   async function fetchSharedEvents() {
     try {
       const response = await API.get("/events/shared");
-      setSharedEvents(response.data);
+
+      const sortedSharedEvents = response.data.sort(
+        (a, b) => new Date(a.start_datetime) - new Date(b.start_datetime)
+      );
+
+      setSharedEvents(sortedSharedEvents);
     } catch (err) {
       console.log(err.response?.data || err.message);
     }
@@ -174,6 +187,7 @@ async function handleLinkUser(e) {
 
   return (
     <main className="dashboard-page">
+      <div className="dashboard-layout">
       <header className="dashboard-header">
         <div>
           <h1>CalendarLink Dashboard</h1>
@@ -220,6 +234,10 @@ async function handleLinkUser(e) {
               value={eventForm.start_datetime}
               onChange={handleEventChange}
               required
+              onInvalid={(e) =>
+                e.target.setCustomValidity("Please enter a start date and time")
+              }
+              onInput={(e) => e.target.setCustomValidity("")}
             />
 
             <input
@@ -228,6 +246,10 @@ async function handleLinkUser(e) {
               value={eventForm.end_datetime}
               onChange={handleEventChange}
               required
+              onInvalid={(e) =>
+                e.target.setCustomValidity("Please enter an end date and time")
+              }
+              onInput={(e) => e.target.setCustomValidity("")}
             />
 
             <select
@@ -292,20 +314,74 @@ async function handleLinkUser(e) {
           <h2>Your Events</h2>
 
           <FullCalendar
-            plugins={[dayGridPlugin]}
+            plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
-            height="auto"
-            events={events.map((event) => ({
-              title: event.title,
-              start: event.start_datetime,
-              end: event.end_datetime,
-              color: event.color,
-            }))}
+            height={700}
+            dateClick={(info) => {
+              const allEvents = [...events, ...sharedEvents];
+
+              const eventsOnDate = allEvents.filter((event) =>
+                event.start_datetime.startsWith(info.dateStr)
+              );
+
+              setSelectedDate(info.dateStr);
+              setSelectedDateEvents(eventsOnDate);
+            }}
+            events={[
+              ...events.map((event) => ({
+                title: event.title,
+                start: event.start_datetime,
+                end: event.end_datetime,
+                color: event.color,
+              })),
+              ...sharedEvents.map((event) => ({
+                title: event.visibility === "busy" ? "Busy" : `👥 ${event.title}`,
+                start: event.start_datetime,
+                end: event.end_datetime,
+                color: event.visibility === "busy" ? "#64748b" : "#8b5cf6",
+              })),
+            ]}
           />
+          <div className="selected-day-events">
+            {!selectedDate ? (
+              <div className="empty-day-message">
+                <h3>Daily Events</h3>
+                <p>Click a day on the calendar to view scheduled events.</p>
+              </div>
+            ) : (
+              <>
+                <h3>Events on {selectedDate}</h3>
+
+                {selectedDateEvents.length === 0 ? (
+                  <p className="no-events-message">
+                    No events on this day.
+                  </p>
+                ) : (
+                  selectedDateEvents.map((event) => (
+                    <div
+                      key={`${event.id}-${event.title}`}
+                      className="event-card"
+                    >
+                      <strong>
+                        {event.visibility === "busy"
+                          ? "Busy"
+                          : event.title}
+                      </strong>
+
+                      <p>
+                        {new Date(event.start_datetime).toLocaleTimeString()} -{" "}
+                        {new Date(event.end_datetime).toLocaleTimeString()}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </>
+            )}
+          </div>
         </div>
         <div className="dashboard-card">
+          <h2>Manage Events</h2>
           <div className="events-list" style={{ marginTop: "2rem" }}>
-          <h3>Manage Events</h3>
 
           {events.length === 0 ? (
             <p>No events yet.</p>
@@ -382,6 +458,7 @@ async function handleLinkUser(e) {
           </div>
         </div>
       </section>
+      </div>
     </main>
   );
 }
