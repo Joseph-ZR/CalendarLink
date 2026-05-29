@@ -183,6 +183,14 @@ async function handleLinkUser(e) {
     fetchEvents();
     fetchLinkedUsers();
     fetchSharedEvents();
+
+    const interval = setInterval(() => {
+      fetchEvents();
+      fetchLinkedUsers();
+      fetchSharedEvents();
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
